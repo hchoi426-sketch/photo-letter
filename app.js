@@ -180,7 +180,7 @@ function fillResult() {
   const card = document.getElementById('main-flip-card');
   if (card) card.classList.remove('flipped');
   const hint = document.getElementById('flip-hint');
-  if (hint) hint.classList.remove('hidden');
+  if (hint) { hint.textContent = '↩ 눌러서 편지 보기'; hint.classList.remove('hidden'); }
 
   // 사진 (1번째 → 위, 2번째 → 아래)
   document.getElementById('result-photo-top').src    = capturedDataUrl1;
@@ -196,11 +196,10 @@ function toggleFlip() {
   const card = document.getElementById('main-flip-card');
   const hint = document.getElementById('flip-hint');
   card.classList.toggle('flipped');
-  // 한 번 뒤집으면 힌트 숨김
   if (card.classList.contains('flipped')) {
-    hint.classList.add('hidden');
+    hint.textContent = '↩ 눌러서 사진 보기';
   } else {
-    hint.classList.remove('hidden');
+    hint.textContent = '↩ 눌러서 편지 보기';
   }
 }
 
@@ -350,7 +349,7 @@ async function saveImage() {
     buildLetterCanvas(to, body, from, dateStr),
   ]);
 
-  // 모바일: Web Share API로 파일 공유 (iOS 사진첩 저장 가능)
+  // 모바일: Web Share API 시도
   if (navigator.share && navigator.canShare) {
     const [blob1, blob2] = await Promise.all([
       new Promise(r => polaroid.toBlob(r, 'image/png')),
@@ -368,10 +367,46 @@ async function saveImage() {
     }
   }
 
-  // 데스크톱 폴백: 직접 다운로드
+  // 모바일 폴백: 이미지 오버레이 (꾹 눌러서 저장)
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  if (isMobile) {
+    showSaveOverlay(polaroid, letter);
+    return;
+  }
+
+  // 데스크톱: 직접 다운로드
   dlBlob(polaroid, `포토레터_사진_${to}.png`);
   setTimeout(() => dlBlob(letter, `포토레터_편지_${to}.png`), 800);
   showToast('사진 + 편지 2장이 저장됩니다 💾');
+}
+
+function showSaveOverlay(polaroid, letter) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = [
+    'position:fixed', 'inset:0', 'background:rgba(0,0,0,0.92)', 'z-index:10000',
+    'overflow-y:auto', 'padding:24px 16px',
+    'display:flex', 'flex-direction:column', 'align-items:center', 'gap:20px'
+  ].join(';');
+
+  const hint = document.createElement('p');
+  hint.textContent = '이미지를 꾹 눌러 사진첩에 저장하세요';
+  hint.style.cssText = "color:#fff;font-family:'Dongle',sans-serif;font-size:20px;text-align:center;margin-top:8px;";
+
+  const img1 = document.createElement('img');
+  img1.src = polaroid.toDataURL('image/png');
+  img1.style.cssText = 'max-width:100%;border-radius:4px;';
+
+  const img2 = document.createElement('img');
+  img2.src = letter.toDataURL('image/png');
+  img2.style.cssText = 'max-width:100%;border-radius:4px;';
+
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '닫기';
+  closeBtn.style.cssText = "background:#fff;border:none;border-radius:50px;padding:12px 32px;font-family:'Dongle',sans-serif;font-size:20px;cursor:pointer;margin-bottom:16px;";
+  closeBtn.onclick = () => document.body.removeChild(overlay);
+
+  overlay.append(hint, img1, img2, closeBtn);
+  document.body.appendChild(overlay);
 }
 
 function dlBlob(canvas, name) {
@@ -389,24 +424,31 @@ function dlBlob(canvas, name) {
 }
 
 /* ── 공통 캔버스 사이즈 (두 이미지 동일) ── */
-const SAVE_W = 1800;
-const SAVE_H = 2800;
+const DESIGN_W = 1800;
+const DESIGN_H = 2800;
+
+function getSaveDims() {
+  const mobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  return mobile ? { W: 900, H: 1400 } : { W: DESIGN_W, H: DESIGN_H };
+}
 
 /* ── 폴라로이드 캔버스 빌더 ── */
 function buildPolaroidCanvas(dateStr) {
   return new Promise((resolve, reject) => {
-    const W   = SAVE_W;
-    const H   = SAVE_H;
-    const pad = 80;
-    const gap = 32;
+    const DW  = DESIGN_W;
+    const DH  = DESIGN_H;
+    const { W, H } = getSaveDims();
+    const pad   = 80;
+    const gap   = 32;
     const dateH = 120;
-    const photoW = W - pad * 2;
-    const photoH = Math.round((H - pad * 2 - gap - dateH) / 2);
+    const photoW = DW - pad * 2;
+    const photoH = Math.round((DH - pad * 2 - gap - dateH) / 2);
 
     const canvas = document.createElement('canvas');
     canvas.width  = W;
     canvas.height = H;
     const ctx = canvas.getContext('2d');
+    ctx.scale(W / DW, H / DH);
 
     const img1 = new Image();
     const img2 = new Image();
@@ -414,7 +456,7 @@ function buildPolaroidCanvas(dateStr) {
 
     const draw = () => {
       ctx.fillStyle = '#fcfcfc';
-      ctx.fillRect(0, 0, W, H);
+      ctx.fillRect(0, 0, DW, DH);
 
       // 사진 1
       ctx.save();
@@ -437,7 +479,7 @@ function buildPolaroidCanvas(dateStr) {
       ctx.font = '40px "Gurajada", serif';
       ctx.fillStyle = '#666';
       ctx.textAlign = 'center';
-      ctx.fillText(dateStr, W / 2, H - 80);
+      ctx.fillText(dateStr, DW / 2, DH - 80);
       ctx.textAlign = 'left';
 
       resolve(canvas);
@@ -453,17 +495,19 @@ function buildPolaroidCanvas(dateStr) {
 /* ── 편지 캔버스 빌더 ── */
 function buildLetterCanvas(to, body, from, dateStr) {
   return new Promise(resolve => {
-    const W  = SAVE_W;
-    const H  = SAVE_H;
+    const DW = DESIGN_W;
+    const DH = DESIGN_H;
+    const { W, H } = getSaveDims();
     const px = 140;
     const canvas = document.createElement('canvas');
     canvas.width  = W;
     canvas.height = H;
     const ctx = canvas.getContext('2d');
+    ctx.scale(W / DW, H / DH);
 
     // 배경
     ctx.fillStyle = '#fcfcfc';
-    ctx.fillRect(0, 0, W, H);
+    ctx.fillRect(0, 0, DW, DH);
 
     // Photo Letter 타이틀
     ctx.font = '112px "Gasoek One", sans-serif';
@@ -476,15 +520,15 @@ function buildLetterCanvas(to, body, from, dateStr) {
     ctx.font = '52px "Hi Melody", cursive';
     ctx.fillText(to || '—', px, 472);
     ctx.strokeStyle = '#ccc'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(px, 504); ctx.lineTo(W - px, 504); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px, 504); ctx.lineTo(DW - px, 504); ctx.stroke();
 
     // contents
     ctx.font = '52px "Gurajada", serif'; ctx.fillStyle = '#000';
     ctx.fillText('contents', px, 628);
     ctx.font = '48px "Hi Melody", cursive'; ctx.fillStyle = '#000';
-    wrapText(ctx, body, px, 732, W - px * 2, 100, 1960);
+    wrapText(ctx, body, px, 732, DW - px * 2, 100, 1960);
     ctx.strokeStyle = '#ccc'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(px, 2000); ctx.lineTo(W - px, 2000); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px, 2000); ctx.lineTo(DW - px, 2000); ctx.stroke();
 
     // From.
     ctx.font = '52px "Gurajada", serif'; ctx.fillStyle = '#000';
@@ -492,13 +536,13 @@ function buildLetterCanvas(to, body, from, dateStr) {
     ctx.font = '52px "Hi Melody", cursive';
     ctx.fillText(from || '—', px, 2228);
     ctx.strokeStyle = '#ccc'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(px, 2260); ctx.lineTo(W - px, 2260); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px, 2260); ctx.lineTo(DW - px, 2260); ctx.stroke();
 
     // 날짜
     ctx.font = '40px "Gurajada", serif';
     ctx.fillStyle = '#666';
     ctx.textAlign = 'center';
-    ctx.fillText(dateStr, W / 2, H - 80);
+    ctx.fillText(dateStr, DW / 2, DH - 80);
     ctx.textAlign = 'left';
 
     resolve(canvas);
