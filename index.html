@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Photo Letter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Gasoek+One&family=Dongle:wght@300;400;700&family=Gurajada&family=Gravitas+One&family=Hi+Melody&family=Raleway:wght@600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- 인트로 화면 -->
+  <div id="screen-start" class="screen active">
+    <div class="grid-bg"></div>
+    <div class="start-card card">
+      <h1 class="title-logo">Photo Letter</h1>
+      <p class="subtitle">소중한 순간을 편지에 담아보세요</p>
+      <button class="pill-btn pill-black" onclick="goTo('screen-letter')">시작하기</button>
+    </div>
+  </div>
+
+  <!-- 편지 쓰기 화면 -->
+  <div id="screen-letter" class="screen">
+    <div class="grid-bg"></div>
+    <div class="screen-inner">
+      <div class="letter-card card">
+        <div class="card-header">
+          <h2 class="title-logo small">Photo Letter</h2>
+          <div class="step-dots">
+            <span class="dot dot-active"><span>1</span></span>
+            <span class="dot"><span>2</span></span>
+          </div>
+        </div>
+
+        <div class="letter-section">
+          <div class="field-label">To.</div>
+          <input id="letter-to" class="hi-melody" type="text" placeholder="받는 사람" maxlength="30" />
+          <div class="field-line"></div>
+        </div>
+
+        <div class="letter-section contents-section">
+          <div class="field-label">contents</div>
+          <textarea id="letter-body" class="hi-melody" placeholder="편지를 써주세요..." maxlength="400"></textarea>
+          <div class="field-line"></div>
+        </div>
+
+        <div class="letter-section">
+          <div class="field-label">From.</div>
+          <input id="letter-from" class="hi-melody" type="text" placeholder="보내는 사람" maxlength="30" />
+          <div class="field-line"></div>
+        </div>
+
+        <div class="card-footer">
+          <button class="pill-btn pill-black dongle" onclick="goToCamera()">사진 찍으러 가기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 카메라 화면 -->
+  <div id="screen-camera" class="screen">
+    <div class="grid-bg"></div>
+    <div class="screen-inner">
+      <div class="camera-card card">
+        <div class="card-header">
+          <h2 class="title-logo small">Photo Letter</h2>
+          <div class="shot-indicator dongle" id="shot-indicator">📷 1번째 사진</div>
+        </div>
+
+        <div class="camera-area">
+          <video id="camera-video" autoplay playsinline muted></video>
+          <canvas id="camera-canvas" style="display:none;"></canvas>
+          <div id="camera-preview-wrap" style="display:none;">
+            <img id="camera-preview" alt="촬영된 사진" />
+          </div>
+          <div id="camera-error" style="display:none;" class="camera-error-msg">
+            카메라를 사용할 수 없습니다.<br/>브라우저 권한을 확인해주세요.
+          </div>
+        </div>
+
+        <div class="camera-controls">
+          <button id="btn-retake" class="pill-btn pill-white dongle" onclick="retakePhoto()" style="display:none;">📸 다시찍기</button>
+          <button id="btn-shutter" class="shutter-btn" onclick="takePhoto()">📷</button>
+          <button id="btn-use-photo" class="pill-btn pill-black dongle" onclick="usePhoto()" style="display:none;">이 사진 사용하기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 프린팅 화면 -->
+  <div id="screen-printing" class="screen">
+    <div class="grid-bg"></div>
+    <div class="printing-inner">
+      <p class="printing-text">photo is printing...</p>
+      <div class="printing-loader">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 결과 화면 -->
+  <div id="screen-result" class="screen">
+    <div class="grid-bg"></div>
+    <div class="result-inner">
+
+      <!-- 힌트 텍스트 (카드 바깥 배경에 작게) -->
+      <p class="flip-hint dongle" id="flip-hint">↩ 눌러서 편지 보기</p>
+
+      <!-- 폴라로이드 플립 카드 (전체가 하나의 카드) -->
+      <div class="flip-card" id="main-flip-card" onclick="toggleFlip()">
+        <div class="flip-inner">
+
+          <!-- 앞면: 사진 2장 + 날짜 -->
+          <div class="flip-front card">
+            <div class="polaroid-wrap">
+              <div class="polaroid">
+                <img id="result-photo-top" alt="photo 1" />
+              </div>
+              <div class="polaroid">
+                <img id="result-photo-bottom" alt="photo 2" />
+              </div>
+            </div>
+            <p id="result-date" class="result-date gurajada"></p>
+          </div>
+
+          <!-- 뒷면: 편지 내용 -->
+          <div class="flip-back card">
+            <h2 class="title-logo small">Photo Letter</h2>
+            <div class="flip-letter">
+              <div class="field-label">To.</div>
+              <p id="result-to" class="hi-melody result-text"></p>
+              <div class="field-line"></div>
+              <div class="field-label">contents</div>
+              <p id="result-body" class="hi-melody result-text body-text"></p>
+              <div class="field-line"></div>
+              <div class="field-label">From.</div>
+              <p id="result-from" class="hi-melody result-text"></p>
+              <div class="field-line"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 액션 버튼 -->
+      <div class="result-actions">
+        <button class="pill-btn pill-white dongle" onclick="goTo('screen-start')">💌 처음으로</button>
+        <button class="pill-btn pill-white dongle" onclick="goBackToCamera()">📸 다시찍기</button>
+        <button class="pill-btn pill-white dongle" onclick="saveImage()">💾 저장하기</button>
+        <button class="pill-btn pill-white dongle" onclick="shareImage()">🔗 링크공유</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 숨겨진 합성 캔버스 -->
+  <canvas id="result-canvas" style="display:none;"></canvas>
+
+  <!-- 토스트 -->
+  <div id="toast" class="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

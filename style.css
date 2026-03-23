@@ -1,0 +1,583 @@
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --dark: #272727;
+  --card: #fcfcfc;
+  --black: #000000;
+  --white: #ffffff;
+  --text-dark: #191919;
+  --text-body: #000000;
+  --grid-color: rgba(217, 217, 217, 0.49);
+  --grid-size: 117px;
+}
+
+html, body {
+  height: 100%;
+  background: var(--dark);
+  color: var(--text-dark);
+  overflow: hidden;
+}
+
+/* 격자를 뷰포트에 고정 — 스크롤·화면 크기에 무관하게 끊김 없이 표시 */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+  background-size: var(--grid-size) var(--grid-size);
+  background-position: 0 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Font Utilities ── */
+.dongle        { font-family: 'Dongle', sans-serif; }
+.gurajada      { font-family: 'Gurajada', serif; }
+.gravitas      { font-family: 'Gravitas One', cursive; }
+.hi-melody     { font-family: 'Hi Melody', cursive; }
+.raleway       { font-family: 'Raleway', sans-serif; font-weight: 600; }
+
+/* .grid-bg — body::before로 대체되어 역할 없음, 레이아웃 유지용 */
+.grid-bg { display: none; }
+
+/* ── Screens ── */
+.screen {
+  display: none;
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.screen.active { display: block; }
+
+/* ── Card ── */
+.card {
+  background: var(--card);
+  border-radius: 0;
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Title Logo ── */
+.title-logo {
+  font-family: 'Gasoek One', sans-serif;
+  font-size: clamp(36px, 5vw, 68px);
+  color: var(--text-dark);
+  line-height: 1.2;
+  letter-spacing: 1pt;
+}
+.title-logo.small {
+  font-size: clamp(24px, 3vw, 42px);
+}
+
+/* ── Pill Buttons ── */
+.pill-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50px;
+  padding: 14px 32px;
+  font-size: clamp(16px, 2vw, 22px);
+  font-family: 'Dongle', sans-serif;
+  cursor: pointer;
+  border: none;
+  letter-spacing: 0.3px;
+  transition: opacity 0.15s, transform 0.1s;
+  white-space: nowrap;
+}
+.pill-btn:active { transform: scale(0.96); }
+
+.pill-black {
+  background: var(--black);
+  color: var(--white);
+}
+.pill-black:hover { opacity: 0.85; }
+
+.pill-white {
+  background: var(--white);
+  color: #151515;
+}
+.pill-white:hover { opacity: 0.85; }
+
+.pill-btn.gravitas { font-family: 'Gravitas One', cursive; font-size: clamp(14px, 1.8vw, 20px); }
+.pill-btn.dongle   { font-family: 'Dongle', sans-serif; font-size: clamp(18px, 2.2vw, 26px); }
+
+/* ── Step Dots ── */
+.step-dots {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+.dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dot span {
+  font-family: 'Raleway', sans-serif;
+  font-weight: 600;
+  font-size: 11px;
+  color: var(--card);
+  line-height: 1;
+}
+.dot.dot-active {
+  background: var(--white);
+}
+.dot.dot-active span { color: var(--dark); }
+
+/* ── Field Label ── */
+.field-label {
+  font-family: 'Gurajada', serif;
+  font-size: clamp(16px, 2vw, 22px);
+  color: var(--text-body);
+  margin-bottom: 4px;
+}
+
+.field-line {
+  width: 100%;
+  height: 1.5px;
+  background: #aaa;
+  margin: 6px 0 12px;
+}
+
+/* ─────────────────────────────────────────
+   INTRO SCREEN
+───────────────────────────────────────── */
+#screen-start {
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+#screen-start.active {
+  display: flex;
+}
+
+.start-card {
+  position: relative;
+  z-index: 1;
+  padding: clamp(40px, 6vw, 80px) clamp(40px, 6vw, 80px);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: min(635px, 90vw);
+  min-height: min(911px, 85vh);
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.subtitle {
+  font-family: 'Dongle', sans-serif;
+  font-size: clamp(16px, 2vw, 24px);
+  color: var(--text-body);
+}
+
+/* ─────────────────────────────────────────
+   LETTER SCREEN
+───────────────────────────────────────── */
+#screen-letter {
+  display: none;
+}
+#screen-letter.active {
+  display: block;
+}
+
+.screen-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px 16px;
+}
+
+.letter-card {
+  width: min(635px, 95vw);
+  min-height: min(911px, auto);
+  padding: clamp(24px, 4vw, 56px) clamp(24px, 4vw, 56px);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.letter-section {
+  margin-bottom: 8px;
+}
+
+.letter-section input,
+.letter-section textarea {
+  width: 100%;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: clamp(16px, 2vw, 22px);
+  color: var(--text-body);
+  padding: 4px 0;
+  resize: none;
+}
+
+.contents-section textarea {
+  min-height: 140px;
+  line-height: 1.8;
+}
+
+.card-footer {
+  margin-top: 24px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ─────────────────────────────────────────
+   CAMERA SCREEN
+───────────────────────────────────────── */
+#screen-camera {
+  display: none;
+}
+#screen-camera.active {
+  display: block;
+}
+
+.camera-card {
+  width: min(635px, 95vw);
+  min-height: min(911px, auto);
+  padding: clamp(24px, 4vw, 48px) clamp(24px, 4vw, 48px);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 24px auto;
+}
+
+.shot-indicator {
+  font-size: clamp(15px, 2vw, 20px);
+  color: var(--text-dark);
+  font-family: 'Dongle', sans-serif;
+}
+
+.camera-area {
+  flex: 1;
+  background: #111;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+  aspect-ratio: 4/3;
+  margin: 20px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#camera-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+#camera-preview-wrap {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#camera-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.camera-error-msg {
+  color: #fff;
+  text-align: center;
+  font-family: 'Dongle', sans-serif;
+  font-size: 18px;
+  padding: 20px;
+  line-height: 1.8;
+}
+
+.camera-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 16px 0 8px;
+  flex-wrap: wrap;
+}
+
+.shutter-btn {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--white);
+  border: 4px solid rgba(0,0,0,0.15);
+  font-size: 32px;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  transition: transform 0.1s;
+  flex-shrink: 0;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.shutter-btn:active { transform: scale(0.92); }
+
+/* ─────────────────────────────────────────
+   PRINTING SCREEN
+───────────────────────────────────────── */
+#screen-printing {
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+#screen-printing.active {
+  display: flex;
+}
+
+.printing-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+}
+
+.printing-text {
+  font-family: 'Gurajada', serif;
+  font-size: clamp(22px, 3vw, 36px);
+  color: var(--white);
+}
+
+.printing-loader {
+  display: flex;
+  gap: 10px;
+}
+.printing-loader span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--white);
+  animation: blink 1.2s infinite;
+}
+.printing-loader span:nth-child(2) { animation-delay: 0.3s; }
+.printing-loader span:nth-child(3) { animation-delay: 0.6s; }
+
+@keyframes blink {
+  0%, 80%, 100% { opacity: 0.2; }
+  40% { opacity: 1; }
+}
+
+/* ─────────────────────────────────────────
+   RESULT SCREEN
+───────────────────────────────────────── */
+#screen-result {
+  display: none;
+}
+#screen-result.active {
+  display: block;
+}
+
+.result-inner {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 32px 16px;
+}
+
+/* 힌트 텍스트 — 카드 바깥 배경에 작게 */
+.flip-hint {
+  font-family: 'Dongle', sans-serif;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.5px;
+  transition: opacity 0.4s;
+  user-select: none;
+}
+.flip-hint.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── 플립 카드 (폴라로이드 전체) ── */
+.flip-card {
+  width: min(420px, 92vw);
+  perspective: 1400px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.flip-inner {
+  position: relative;
+  width: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.7s cubic-bezier(0.4, 0.2, 0.2, 1);
+}
+
+.flip-card.flipped .flip-inner {
+  transform: rotateY(180deg);
+}
+
+.flip-front,
+.flip-back {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* 앞면: 폴라로이드 카드 */
+.flip-front {
+  padding: clamp(20px, 4vw, 40px) clamp(20px, 4vw, 40px) clamp(16px, 3vw, 28px);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.polaroid-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.polaroid {
+  width: 100%;
+  aspect-ratio: 4/3;
+  overflow: hidden;
+  background: #000;
+}
+
+.polaroid img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  display: block;
+}
+
+.result-date {
+  font-size: clamp(12px, 1.5vw, 16px);
+  color: #555;
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+/* 뒷면: 편지 내용 */
+.flip-back {
+  position: absolute;
+  inset: 0;
+  transform: rotateY(180deg);
+  padding: clamp(20px, 4vw, 40px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+}
+
+.flip-letter {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  margin-top: 10px;
+}
+
+.result-text {
+  font-size: clamp(13px, 1.8vw, 18px);
+  color: var(--text-body);
+  padding: 2px 0;
+  word-break: break-all;
+}
+
+.result-text.body-text {
+  white-space: pre-wrap;
+  min-height: 60px;
+}
+
+.result-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.result-actions .pill-btn {
+  width: 160px;
+  justify-content: center;
+}
+
+/* ─────────────────────────────────────────
+   TOAST
+───────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(16px);
+  background: rgba(0,0,0,0.8);
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 50px;
+  font-family: 'Dongle', sans-serif;
+  font-size: 18px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s, transform 0.3s;
+  white-space: nowrap;
+  z-index: 9999;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ─────────────────────────────────────────
+   DESKTOP LAYOUT
+───────────────────────────────────────── */
+@media (min-width: 1024px) {
+  .result-layout {
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+}
+
+
+
+@media (max-width: 600px) {
+  .card-header {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .result-layout {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .result-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+}
