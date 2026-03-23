@@ -239,7 +239,7 @@ function drawCanvas(ctx, img1, img2, W, H) {
     ctx.fillRect(lx, ly, lw, lh);
 
     // Photo Letter 타이틀
-    ctx.font = 'bold 36px "Gasoek One", sans-serif';
+    ctx.font = 'bold 36px "Moul", sans-serif';
     ctx.fillStyle = '#191919';
     ctx.fillText('Photo Letter', lx + 24, ly + 56);
 
@@ -510,7 +510,7 @@ function buildLetterCanvas(to, body, from, dateStr) {
     ctx.fillRect(0, 0, DW, DH);
 
     // Photo Letter 타이틀
-    ctx.font = '112px "Gasoek One", sans-serif';
+    ctx.font = '112px "Moul", sans-serif';
     ctx.fillStyle = '#191919';
     ctx.fillText('Photo Letter', px, 192);
 
