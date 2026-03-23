@@ -343,8 +343,6 @@ async function saveImage() {
   const dateStr = document.getElementById('result-date').textContent;
 
   showToast('저장 준비 중...');
-
-  // 폰트가 모두 로드된 후 캔버스에 그림
   await document.fonts.ready;
 
   const [polaroid, letter] = await Promise.all([
@@ -352,11 +350,27 @@ async function saveImage() {
     buildLetterCanvas(to, body, from, dateStr),
   ]);
 
-  // 첫 번째 파일 즉시 다운로드
-  dlBlob(polaroid, `포토레터_사진_${to}.png`);
-  // 두 번째 파일은 짧은 딜레이 후 (브라우저 차단 방지)
-  setTimeout(() => dlBlob(letter, `포토레터_편지_${to}.png`), 800);
+  // 모바일: Web Share API로 파일 공유 (iOS 사진첩 저장 가능)
+  if (navigator.share && navigator.canShare) {
+    const [blob1, blob2] = await Promise.all([
+      new Promise(r => polaroid.toBlob(r, 'image/png')),
+      new Promise(r => letter.toBlob(r, 'image/png')),
+    ]);
+    const file1 = new File([blob1], `포토레터_사진_${to}.png`, { type: 'image/png' });
+    const file2 = new File([blob2], `포토레터_편지_${to}.png`, { type: 'image/png' });
+    if (navigator.canShare({ files: [file1, file2] })) {
+      try {
+        await navigator.share({ files: [file1, file2], title: 'Photo Letter' });
+        return;
+      } catch (e) {
+        if (e.name === 'AbortError') return;
+      }
+    }
+  }
 
+  // 데스크톱 폴백: 직접 다운로드
+  dlBlob(polaroid, `포토레터_사진_${to}.png`);
+  setTimeout(() => dlBlob(letter, `포토레터_편지_${to}.png`), 800);
   showToast('사진 + 편지 2장이 저장됩니다 💾');
 }
 
