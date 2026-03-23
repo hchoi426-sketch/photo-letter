@@ -254,7 +254,7 @@ function drawCanvas(ctx, img1, img2, W, H) {
 
     ctx.font = '18px "Gurajada", serif';
     ctx.fillStyle = '#000';
-    ctx.fillText('contents', lx + 24, ly + 162);
+    ctx.fillText('Message', lx + 24, ly + 162);
     ctx.font = '16px "Hi Melody", cursive';
     ctx.fillStyle = '#000';
     wrapText(ctx, body, lx + 24, ly + 188, lw - 48, 26, ly + lh - 120);
@@ -524,7 +524,7 @@ function buildLetterCanvas(to, body, from, dateStr) {
 
     // contents
     ctx.font = '52px "Gurajada", serif'; ctx.fillStyle = '#000';
-    ctx.fillText('contents', px, 628);
+    ctx.fillText('Message', px, 628);
     ctx.font = '48px "Hi Melody", cursive'; ctx.fillStyle = '#000';
     wrapText(ctx, body, px, 732, DW - px * 2, 100, 1960);
     ctx.strokeStyle = '#ccc'; ctx.lineWidth = 2;
