@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Preview Generator</title></head>
+<body style="margin:0;background:#111;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:16px;">
+<canvas id="c" width="1200" height="630" style="max-width:90vw;border:1px solid #333;"></canvas>
+<button onclick="download()" style="background:#fff;border:none;padding:14px 32px;font-size:18px;cursor:pointer;border-radius:50px;">preview.png 다운로드</button>
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+
+ctx.fillStyle = '#272727';
+ctx.fillRect(0, 0, 1200, 630);
+
+ctx.strokeStyle = 'rgba(217,217,217,0.35)';
+ctx.lineWidth = 1;
+for (let x = 117; x < 1200; x += 117) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,630); ctx.stroke(); }
+for (let y = 117; y < 630; y += 117) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(1200,y); ctx.stroke(); }
+
+ctx.fillStyle = '#fcfcfc';
+ctx.fillRect(220, 55, 760, 520);
+
+ctx.fillStyle = '#191919';
+ctx.font = 'bold 88px Georgia, serif';
+ctx.textAlign = 'center';
+ctx.fillText('Photo Letter', 600, 255);
+
+ctx.strokeStyle = '#ddd';
+ctx.lineWidth = 1.5;
+ctx.beginPath(); ctx.moveTo(320, 300); ctx.lineTo(880, 300); ctx.stroke();
+
+ctx.fillStyle = '#555';
+ctx.font = '30px sans-serif';
+ctx.fillText('하고싶은 말을 쓰고 그 순간을 담아보세요', 600, 378);
+
+ctx.fillStyle = '#aaa';
+ctx.font = '34px sans-serif';
+ctx.fillText('*⸜( •ᴗ• )⸝*', 600, 440);
+
+function download() {
+  const a = document.createElement('a');
+  a.download = 'preview.png';
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+}
+</script>
+</body>
+</html>
