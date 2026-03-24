@@ -549,118 +549,34 @@ function buildLetterCanvas(to, body, from, dateStr) {
   });
 }
 
-/* ── 공유 ── */
+/* ── 공유 (결과 이미지 직접 공유) ── */
 async function shareImage() {
-  showToast('링크 생성 중...');
-  try {
-    const to   = document.getElementById('letter-to').value.trim();
-    const body = document.getElementById('letter-body').value.trim();
-    const from = document.getElementById('letter-from').value.trim();
-    const date = document.getElementById('result-date').textContent;
+  showToast('공유 준비 중...');
+  await document.fonts.ready;
 
-    const [p1, p2] = await Promise.all([
-      compressPhoto(capturedDataUrl1, 120, 90),
-      compressPhoto(capturedDataUrl2, 120, 90),
-    ]);
+  const dateStr = document.getElementById('result-date').textContent;
+  const polaroid = await buildPolaroidCanvas(dateStr);
 
-    const shareUrl = location.origin + location.pathname +
-      '#share=' + payloadEncode({ to, body, from, date, p1, p2 });
+  polaroid.toBlob(async blob => {
+    const file = new File([blob], '포토레터.png', { type: 'image/png' });
 
-    copyText(shareUrl);
-    showToast('공유 링크가 복사되었습니다 🔗');
-  } catch (e) {
-    console.error(e);
-    showToast('링크 생성에 실패했습니다');
-  }
+    // 모바일: 네이티브 공유 시트 (카카오톡, 인스타 등)
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: 'Photo Letter' });
+        return;
+      } catch (e) {
+        if (e.name === 'AbortError') return;
+      }
+    }
+
+    // 데스크톱: 새 탭에서 이미지 열기
+    const url = URL.createObjectURL(blob);
+    const w   = window.open(url, '_blank');
+    if (!w) showToast('팝업을 허용해주세요');
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  }, 'image/png');
 }
-
-/* UTF-8 안전 URL-safe base64 인코딩/디코딩 */
-function payloadEncode(obj) {
-  const bytes = new TextEncoder().encode(JSON.stringify(obj));
-  let bin = '';
-  bytes.forEach(b => bin += String.fromCharCode(b));
-  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
-
-function payloadDecode(str) {
-  const b64   = str.replace(/-/g, '+').replace(/_/g, '/');
-  const bin   = atob(b64);
-  const bytes = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-  return JSON.parse(new TextDecoder().decode(bytes));
-}
-
-function copyText(text) {
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).catch(() => copyFallback(text));
-  } else {
-    copyFallback(text);
-  }
-}
-
-function copyFallback(text) {
-  const ta = document.createElement('textarea');
-  ta.value = text;
-  ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;font-size:16px;';
-  document.body.appendChild(ta);
-  ta.focus();
-  ta.select();
-  try { document.execCommand('copy'); } catch (_) {}
-  document.body.removeChild(ta);
-}
-
-function compressPhoto(dataUrl, w, h) {
-  return new Promise(resolve => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width  = w;
-      canvas.height = h;
-      const ctx = canvas.getContext('2d');
-      const scale = Math.max(w / img.width, h / img.height);
-      const sw = w / scale, sh = h / scale;
-      const sx = (img.width - sw) / 2, sy = (img.height - sh) / 2;
-      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, w, h);
-      resolve(canvas.toDataURL('image/jpeg', 0.3));
-    };
-    img.src = dataUrl;
-  });
-}
-
-/* ── 공유 링크로 접속 시 결과 화면 복원 ── */
-function loadSharedResult() {
-  const hash = location.hash;
-  if (!hash.startsWith('#share=')) return;
-  try {
-    const encoded = hash.slice(7);
-    const d       = payloadDecode(encoded);
-
-    document.getElementById('letter-to').value   = d.to   || '';
-    document.getElementById('letter-body').value = d.body || '';
-    document.getElementById('letter-from').value = d.from || '';
-
-    capturedDataUrl1 = d.p1;
-    capturedDataUrl2 = d.p2;
-
-    document.getElementById('result-date').textContent  = d.date || '';
-    document.getElementById('result-to').textContent    = d.to   || '—';
-    document.getElementById('result-body').textContent  = d.body || '';
-    document.getElementById('result-from').textContent  = d.from || '—';
-    document.getElementById('result-photo-top').src     = d.p1;
-    document.getElementById('result-photo-bottom').src  = d.p2;
-
-    const card = document.getElementById('main-flip-card');
-    if (card) card.classList.remove('flipped');
-    const hint = document.getElementById('flip-hint');
-    if (hint) { hint.textContent = '↩ 눌러서 편지 보기'; hint.classList.remove('hidden'); }
-
-    goTo('screen-result');
-  } catch (e) {
-    console.error('공유 링크 파싱 실패:', e);
-  }
-}
-
-window.addEventListener('DOMContentLoaded', loadSharedResult);
 
 /* ── 토스트 ── */
 function showToast(msg) {
