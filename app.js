@@ -559,15 +559,12 @@ async function shareImage() {
     const date = document.getElementById('result-date').textContent;
 
     const [p1, p2] = await Promise.all([
-      compressPhoto(capturedDataUrl1, 180, 135),
-      compressPhoto(capturedDataUrl2, 180, 135),
+      compressPhoto(capturedDataUrl1, 120, 90),
+      compressPhoto(capturedDataUrl2, 120, 90),
     ]);
 
-    const payload = JSON.stringify({ to, body, from, date, p1, p2, v: 1 });
-    // UTF-8 안전 base64 인코딩
-    const encoded = btoa(encodeURIComponent(payload).replace(/%([0-9A-F]{2})/g,
-      (_, p) => String.fromCharCode(parseInt(p, 16))));
-    const shareUrl = location.origin + location.pathname + '#share=' + encoded;
+    const shareUrl = location.origin + location.pathname +
+      '#share=' + payloadEncode({ to, body, from, date, p1, p2 });
 
     copyText(shareUrl);
     showToast('공유 링크가 복사되었습니다 🔗');
@@ -575,6 +572,22 @@ async function shareImage() {
     console.error(e);
     showToast('링크 생성에 실패했습니다');
   }
+}
+
+/* UTF-8 안전 URL-safe base64 인코딩/디코딩 */
+function payloadEncode(obj) {
+  const bytes = new TextEncoder().encode(JSON.stringify(obj));
+  let bin = '';
+  bytes.forEach(b => bin += String.fromCharCode(b));
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function payloadDecode(str) {
+  const b64   = str.replace(/-/g, '+').replace(/_/g, '/');
+  const bin   = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return JSON.parse(new TextDecoder().decode(bytes));
 }
 
 function copyText(text) {
@@ -608,7 +621,7 @@ function compressPhoto(dataUrl, w, h) {
       const sw = w / scale, sh = h / scale;
       const sx = (img.width - sw) / 2, sy = (img.height - sh) / 2;
       ctx.drawImage(img, sx, sy, sw, sh, 0, 0, w, h);
-      resolve(canvas.toDataURL('image/jpeg', 0.35));
+      resolve(canvas.toDataURL('image/jpeg', 0.3));
     };
     img.src = dataUrl;
   });
@@ -620,9 +633,7 @@ function loadSharedResult() {
   if (!hash.startsWith('#share=')) return;
   try {
     const encoded = hash.slice(7);
-    const json    = decodeURIComponent(atob(encoded).split('').map(
-      c => '%' + c.charCodeAt(0).toString(16).padStart(2, '0')).join(''));
-    const d       = JSON.parse(json);
+    const d       = payloadDecode(encoded);
 
     document.getElementById('letter-to').value   = d.to   || '';
     document.getElementById('letter-body').value = d.body || '';
