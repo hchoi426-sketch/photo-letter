@@ -551,13 +551,83 @@ function buildLetterCanvas(to, body, from, dateStr) {
 
 /* ── 공유 ── */
 async function shareImage() {
+  showToast('링크 생성 중...');
   try {
-    await navigator.clipboard.writeText(window.location.href);
-    showToast('링크가 복사되었습니다 🔗');
+    const to   = document.getElementById('letter-to').value.trim();
+    const body = document.getElementById('letter-body').value.trim();
+    const from = document.getElementById('letter-from').value.trim();
+    const date = document.getElementById('result-date').textContent;
+
+    // 사진을 작게 압축 (URL 인코딩용)
+    const [p1, p2] = await Promise.all([
+      compressPhoto(capturedDataUrl1, 320, 240),
+      compressPhoto(capturedDataUrl2, 320, 240),
+    ]);
+
+    const payload = JSON.stringify({ to, body, from, date, p1, p2, v: 1 });
+    const encoded = btoa(unescape(encodeURIComponent(payload)));
+    const shareUrl = location.origin + location.pathname + '#share=' + encoded;
+
+    await navigator.clipboard.writeText(shareUrl);
+    showToast('공유 링크가 복사되었습니다 🔗');
   } catch (e) {
-    showToast('링크 복사에 실패했습니다');
+    showToast('링크 생성에 실패했습니다');
   }
 }
+
+function compressPhoto(dataUrl, w, h) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width  = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      const scale = Math.max(w / img.width, h / img.height);
+      const sw = w / scale, sh = h / scale;
+      const sx = (img.width - sw) / 2, sy = (img.height - sh) / 2;
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', 0.4));
+    };
+    img.src = dataUrl;
+  });
+}
+
+/* ── 공유 링크로 접속 시 결과 화면 복원 ── */
+function loadSharedResult() {
+  const hash = location.hash;
+  if (!hash.startsWith('#share=')) return;
+  try {
+    const encoded = hash.slice(7);
+    const json    = decodeURIComponent(escape(atob(encoded)));
+    const d       = JSON.parse(json);
+
+    document.getElementById('letter-to').value   = d.to   || '';
+    document.getElementById('letter-body').value = d.body || '';
+    document.getElementById('letter-from').value = d.from || '';
+
+    capturedDataUrl1 = d.p1;
+    capturedDataUrl2 = d.p2;
+
+    document.getElementById('result-date').textContent  = d.date || '';
+    document.getElementById('result-to').textContent    = d.to   || '—';
+    document.getElementById('result-body').textContent  = d.body || '';
+    document.getElementById('result-from').textContent  = d.from || '—';
+    document.getElementById('result-photo-top').src     = d.p1;
+    document.getElementById('result-photo-bottom').src  = d.p2;
+
+    const card = document.getElementById('main-flip-card');
+    if (card) card.classList.remove('flipped');
+    const hint = document.getElementById('flip-hint');
+    if (hint) { hint.textContent = '↩ 눌러서 편지 보기'; hint.classList.remove('hidden'); }
+
+    goTo('screen-result');
+  } catch (e) {
+    console.error('공유 링크 파싱 실패:', e);
+  }
+}
+
+window.addEventListener('DOMContentLoaded', loadSharedResult);
 
 /* ── 토스트 ── */
 function showToast(msg) {
