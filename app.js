@@ -549,34 +549,109 @@ function buildLetterCanvas(to, body, from, dateStr) {
   });
 }
 
-/* ── 공유 (결과 이미지 직접 공유) ── */
+/* ── 공유 (Firebase 링크 생성) ── */
 async function shareImage() {
-  showToast('공유 준비 중...');
-  await document.fonts.ready;
+  showToast('링크 생성 중...');
+  try {
+    const to   = document.getElementById('letter-to').value.trim();
+    const body = document.getElementById('letter-body').value.trim();
+    const from = document.getElementById('letter-from').value.trim();
+    const date = document.getElementById('result-date').textContent;
 
-  const dateStr = document.getElementById('result-date').textContent;
-  const polaroid = await buildPolaroidCanvas(dateStr);
+    const [p1, p2] = await Promise.all([
+      compressPhoto(capturedDataUrl1, 320, 240),
+      compressPhoto(capturedDataUrl2, 320, 240),
+    ]);
 
-  polaroid.toBlob(async blob => {
-    const file = new File([blob], '포토레터.png', { type: 'image/png' });
+    const docRef = await window._addDoc(
+      window._col(window._db, 'letters'),
+      { to, body, from, date, p1, p2, createdAt: new Date().toISOString() }
+    );
 
-    // 모바일: 네이티브 공유 시트 (카카오톡, 인스타 등)
-    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-      try {
-        await navigator.share({ files: [file], title: 'Photo Letter' });
-        return;
-      } catch (e) {
-        if (e.name === 'AbortError') return;
-      }
-    }
-
-    // 데스크톱: 새 탭에서 이미지 열기
-    const url = URL.createObjectURL(blob);
-    const w   = window.open(url, '_blank');
-    if (!w) showToast('팝업을 허용해주세요');
-    setTimeout(() => URL.revokeObjectURL(url), 5000);
-  }, 'image/png');
+    const shareUrl = location.origin + location.pathname + '#result=' + docRef.id;
+    copyText(shareUrl);
+    showToast('공유 링크가 복사되었습니다 🔗');
+  } catch (e) {
+    console.error(e);
+    showToast('링크 생성에 실패했습니다');
+  }
 }
+
+function copyText(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).catch(() => copyFallback(text));
+  } else {
+    copyFallback(text);
+  }
+}
+
+function copyFallback(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;font-size:16px;';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try { document.execCommand('copy'); } catch (_) {}
+  document.body.removeChild(ta);
+}
+
+function compressPhoto(dataUrl, w, h) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width  = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      const scale = Math.max(w / img.width, h / img.height);
+      const sw = w / scale, sh = h / scale;
+      const sx = (img.width - sw) / 2, sy = (img.height - sh) / 2;
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', 0.5));
+    };
+    img.src = dataUrl;
+  });
+}
+
+/* ── 공유 링크로 접속 시 결과 복원 ── */
+function loadSharedResult() {
+  const hash = location.hash;
+  if (!hash.startsWith('#result=')) return;
+
+  const id = hash.slice(8);
+  showToast('결과를 불러오는 중...');
+
+  window._getDoc(window._doc(window._db, 'letters', id))
+    .then(snap => {
+      if (!snap.exists()) { showToast('링크가 만료되었거나 존재하지 않습니다'); return; }
+      const d = snap.data();
+
+      document.getElementById('letter-to').value   = d.to   || '';
+      document.getElementById('letter-body').value = d.body || '';
+      document.getElementById('letter-from').value = d.from || '';
+
+      capturedDataUrl1 = d.p1;
+      capturedDataUrl2 = d.p2;
+
+      document.getElementById('result-date').textContent  = d.date || '';
+      document.getElementById('result-to').textContent    = d.to   || '—';
+      document.getElementById('result-body').textContent  = d.body || '';
+      document.getElementById('result-from').textContent  = d.from || '—';
+      document.getElementById('result-photo-top').src     = d.p1;
+      document.getElementById('result-photo-bottom').src  = d.p2;
+
+      const card = document.getElementById('main-flip-card');
+      if (card) card.classList.remove('flipped');
+      const hint = document.getElementById('flip-hint');
+      if (hint) { hint.textContent = '↩ 눌러서 편지 보기'; hint.classList.remove('hidden'); }
+
+      goTo('screen-result');
+    })
+    .catch(e => { console.error(e); showToast('결과를 불러오지 못했습니다'); });
+}
+
+window.addEventListener('firebase-ready', loadSharedResult);
 
 /* ── 토스트 ── */
 function showToast(msg) {

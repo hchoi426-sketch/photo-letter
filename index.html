@@ -145,7 +145,7 @@
         <button class="pill-btn pill-white dongle" onclick="goTo('screen-start')">💌 처음으로</button>
         <button class="pill-btn pill-white dongle" onclick="goBackToCamera()">📸 다시찍기</button>
         <button class="pill-btn pill-white dongle" onclick="saveImage()">💾 저장하기</button>
-        <button class="pill-btn pill-white dongle" onclick="shareImage()">🔗 공유하기</button>
+        <button class="pill-btn pill-white dongle" onclick="shareImage()">🔗 링크공유</button>
       </div>
 
     </div>
@@ -156,6 +156,30 @@
 
   <!-- 토스트 -->
   <div id="toast" class="toast"></div>
+
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import { getFirestore, collection, addDoc, doc, getDoc }
+      from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+    const app = initializeApp({
+      apiKey: "AIzaSyCdxan9g6VHybIxNTMFPWr2z6Z0kcEYE38",
+      authDomain: "photo-letter-3ce3d.firebaseapp.com",
+      projectId: "photo-letter-3ce3d",
+      storageBucket: "photo-letter-3ce3d.firebasestorage.app",
+      messagingSenderId: "1029571565514",
+      appId: "1:1029571565514:web:6d0ff4a9b6c2bf452e6133"
+    });
+
+    const db = getFirestore(app);
+    window._db  = db;
+    window._col = collection;
+    window._addDoc  = addDoc;
+    window._doc     = doc;
+    window._getDoc  = getDoc;
+    window.dispatchEvent(new Event('firebase-ready'));
+  </script>
 
   <script src="app.js"></script>
 </body>
