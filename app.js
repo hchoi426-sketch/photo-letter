@@ -569,31 +569,66 @@ async function shareImage() {
     );
 
     const shareUrl = location.origin + location.pathname + '#result=' + docRef.id;
-    copyText(shareUrl);
-    showToast('공유 링크가 복사되었습니다 🔗');
+    showShareModal(shareUrl);
   } catch (e) {
     console.error(e);
     showToast('링크 생성에 실패했습니다');
   }
 }
 
-function copyText(text) {
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).catch(() => copyFallback(text));
-  } else {
-    copyFallback(text);
-  }
-}
+function showShareModal(url) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = [
+    'position:fixed','inset:0','background:rgba(0,0,0,0.75)',
+    'z-index:10000','display:flex','align-items:center',
+    'justify-content:center','padding:24px'
+  ].join(';');
 
-function copyFallback(text) {
-  const ta = document.createElement('textarea');
-  ta.value = text;
-  ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;font-size:16px;';
-  document.body.appendChild(ta);
-  ta.focus();
-  ta.select();
-  try { document.execCommand('copy'); } catch (_) {}
-  document.body.removeChild(ta);
+  const box = document.createElement('div');
+  box.style.cssText = [
+    'background:#fcfcfc','border-radius:12px','padding:28px 24px',
+    'width:100%','max-width:400px','display:flex',
+    'flex-direction:column','gap:16px'
+  ].join(';');
+
+  const title = document.createElement('p');
+  title.textContent = '공유 링크가 생성되었어요';
+  title.style.cssText = "font-family:'Dongle',sans-serif;font-size:20px;color:#191919;text-align:center;";
+
+  const input = document.createElement('input');
+  input.value    = url;
+  input.readOnly = true;
+  input.style.cssText = [
+    'width:100%','border:1.5px solid #ddd','border-radius:8px',
+    'padding:10px 12px','font-size:13px','color:#444',
+    'background:#f7f7f7','outline:none','cursor:pointer'
+  ].join(';');
+  input.onclick = () => { input.select(); };
+
+  const copyBtn = document.createElement('button');
+  copyBtn.textContent = '링크 복사';
+  copyBtn.style.cssText = [
+    'background:#000','color:#fff','border:none','border-radius:50px',
+    'padding:14px','font-family:\'Dongle\',sans-serif','font-size:20px','cursor:pointer'
+  ].join(';');
+  copyBtn.onclick = () => {
+    navigator.clipboard.writeText(url)
+      .catch(() => { input.select(); document.execCommand('copy'); });
+    showToast('링크가 복사되었습니다 🔗');
+    document.body.removeChild(overlay);
+  };
+
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '닫기';
+  closeBtn.style.cssText = [
+    'background:none','border:none','font-family:\'Dongle\',sans-serif',
+    'font-size:18px','color:#aaa','cursor:pointer'
+  ].join(';');
+  closeBtn.onclick = () => document.body.removeChild(overlay);
+
+  box.append(title, input, copyBtn, closeBtn);
+  overlay.append(box);
+  document.body.appendChild(overlay);
 }
 
 function compressPhoto(dataUrl, w, h) {
