@@ -14,6 +14,7 @@ function resetAll() {
   capturedDataUrl2 = null;
   currentShot = 1;
   stopCamera();
+  history.replaceState(null, '', location.pathname);
   goTo('screen-start');
 }
 
