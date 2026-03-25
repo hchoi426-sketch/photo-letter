@@ -6,6 +6,17 @@ function goTo(id) {
   document.getElementById(id).classList.add('active');
 }
 
+function resetAll() {
+  document.getElementById('letter-to').value   = '';
+  document.getElementById('letter-body').value = '';
+  document.getElementById('letter-from').value = '';
+  capturedDataUrl1 = null;
+  capturedDataUrl2 = null;
+  currentShot = 1;
+  stopCamera();
+  goTo('screen-start');
+}
+
 /* ── 편지 글자 수 ── */
 const letterBody = document.getElementById('letter-body');
 letterBody.addEventListener('input', () => {
