@@ -6,14 +6,17 @@ function goTo(id) {
   document.getElementById(id).classList.add('active');
 }
 
+let _shareAborted = false;
+
 function resetAll() {
+  _shareAborted = true;
   document.getElementById('letter-to').value   = '';
   document.getElementById('letter-body').value = '';
   document.getElementById('letter-from').value = '';
   capturedDataUrl1 = null;
   capturedDataUrl2 = null;
   currentShot = 1;
-  stopCamera();
+  try { stopCamera(); } catch (_) {}
   history.replaceState(null, '', location.pathname);
   goTo('screen-start');
 }
@@ -693,7 +696,7 @@ function loadSharedResult() {
       const hint = document.getElementById('flip-hint');
       if (hint) { hint.textContent = '↩ 눌러서 편지 보기'; hint.classList.remove('hidden'); }
 
-      goTo('screen-result');
+      if (!_shareAborted) goTo('screen-result');
     })
     .catch(e => { console.error(e); showToast('결과를 불러오지 못했습니다'); });
 }
