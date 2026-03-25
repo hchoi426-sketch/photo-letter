@@ -8,8 +8,7 @@ function goTo(id) {
 
 function resetAll() {
   try { stopCamera(); } catch (_) {}
-  history.replaceState(null, '', location.pathname);
-  location.reload();
+  location.href = location.origin + location.pathname;
 }
 
 /* ── 편지 글자 수 ── */
