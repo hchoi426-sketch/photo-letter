@@ -686,7 +686,7 @@ function loadSharedResult() {
       const hint = document.getElementById('flip-hint');
       if (hint) { hint.textContent = '↩ 눌러서 편지 보기'; hint.classList.remove('hidden'); }
 
-      if (!_shareAborted) goTo('screen-result');
+      goTo('screen-result');
     })
     .catch(e => { console.error(e); showToast('결과를 불러오지 못했습니다'); });
 }
