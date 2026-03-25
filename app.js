@@ -6,19 +6,10 @@ function goTo(id) {
   document.getElementById(id).classList.add('active');
 }
 
-let _shareAborted = false;
-
 function resetAll() {
-  _shareAborted = true;
-  document.getElementById('letter-to').value   = '';
-  document.getElementById('letter-body').value = '';
-  document.getElementById('letter-from').value = '';
-  capturedDataUrl1 = null;
-  capturedDataUrl2 = null;
-  currentShot = 1;
   try { stopCamera(); } catch (_) {}
   history.replaceState(null, '', location.pathname);
-  goTo('screen-start');
+  location.reload();
 }
 
 /* ── 편지 글자 수 ── */
